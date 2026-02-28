@@ -97,13 +97,20 @@ set_apt 'APT::Periodic::Unattended-Upgrade' '1'
 systemctl enable unattended-upgrades
 systemctl start unattended-upgrades
 
+
 echo ""
-echo "[3/9] Removing update popups..."
-echo "--------------------------------"
-apt remove -y --purge \
-  update-notifier \
-  update-notifier-common \
-  ubuntu-release-upgrader-gtk 2>/dev/null || true
+echo "[3/9] Disabling update popups..."
+echo "---------------------------------"
+
+# Disable update-notifier autostart so it never shows popups
+# We keep the package installed so updates don't reinstall it as a dependency
+if [ -f /etc/xdg/autostart/update-notifier.desktop ]; then
+  sed -i 's/^X-GNOME-Autostart-enabled=.*/X-GNOME-Autostart-enabled=false/'     /etc/xdg/autostart/update-notifier.desktop
+  # Also hide it from KDE autostart
+  if ! grep -q "^Hidden=true" /etc/xdg/autostart/update-notifier.desktop; then
+    echo "Hidden=true" >> /etc/xdg/autostart/update-notifier.desktop
+  fi
+fi
 
 # Disable KDE's own update notifier popup
 sudo -u $ACTUAL_USER bash << 'USEREOF'
