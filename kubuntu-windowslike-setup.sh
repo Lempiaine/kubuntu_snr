@@ -112,53 +112,9 @@ ln -sf /dev/null /etc/xdg/autostart/update-notifier.desktop
 ln -sf /dev/null /etc/xdg/autostart/plasma-discover-notifier.desktop
 
 
-echo ""
-echo "[4/9] Configuring KDE desktop to look like Windows 10..."
-echo "---------------------------------------------------------"
-
-sudo -u $ACTUAL_USER bash << 'USEREOF'
-
-# Apply Windows-like look and feel properly using plasma tools
-# kwriteconfig5 alone is not enough for theme - need plasma-apply commands
-plasma-apply-lookandfeel --apply org.kde.breeze.desktop 2>/dev/null || true
-plasma-apply-colorscheme BreezeLight 2>/dev/null || true
-
-# Font similar to Segoe UI (Noto Sans is very close)
-# kwriteconfig5 is the correct way to set fonts
-kwriteconfig5 --file kdeglobals --group General --key font "Noto Sans,10,-1,5,50,0,0,0,0,0"
-kwriteconfig5 --file kdeglobals --group General --key fixed "Noto Sans Mono,10,-1,5,50,0,0,0,0,0"
-kwriteconfig5 --file kdeglobals --group General --key menuFont "Noto Sans,10,-1,5,50,0,0,0,0,0"
-kwriteconfig5 --file kdeglobals --group General --key smallestReadableFont "Noto Sans,8,-1,5,50,0,0,0,0,0"
-kwriteconfig5 --file kdeglobals --group General --key toolBarFont "Noto Sans,10,-1,5,50,0,0,0,0,0"
-kwriteconfig5 --file kdeglobals --group WM --key activeFont "Noto Sans,10,-1,5,700,0,0,0,0,0"
-
-# Double-click to open files (like Windows)
-kwriteconfig5 --file kdeglobals --group KDE --key SingleClick false
-
-# Show file extensions in Dolphin file manager
-# HideFileExtensions false means extensions are always visible
-kwriteconfig5 --file kdeglobals --group KDE --key HideFileExtensions false
-
-# Single workspace - prevents windows disappearing to another workspace
-kwriteconfig5 --file kwinrc --group Desktops --key Number 1
-kwriteconfig5 --file kwinrc --group Desktops --key Rows 1
-
-# Disable desktop effects that might confuse
-kwriteconfig5 --file kwinrc --group Plugins --key desktopgridEnabled false
-kwriteconfig5 --file kwinrc --group Plugins --key presentwindowsEnabled false
-kwriteconfig5 --file kwinrc --group Plugins --key cube-slideEnabled false
-
-# Window controls on the right like Windows (minimize, maximize, close)
-kwriteconfig5 --file kwinrc --group org.kde.kdecoration2 --key ButtonsOnRight "IAX"
-kwriteconfig5 --file kwinrc --group org.kde.kdecoration2 --key ButtonsOnLeft ""
-
-# Disable activity manager - correct setting for recent KDE versions
-kwriteconfig5 --file kactivitymanagerdrc --group "Plugin-org.kde.kactivitymanagerd.activities" --key enabled false 2>/dev/null || true
-
-USEREOF
 
 echo ""
-echo "[5/9] Disabling confusing keyboard keys..."
+echo "[4/9] Disabling confusing keyboard keys..."
 echo "-------------------------------------------"
 
 # Disable caps lock system-wide - only change XKBOPTIONS, preserve existing layout
@@ -207,7 +163,7 @@ EOF
 chown $ACTUAL_USER:$ACTUAL_USER "$USER_HOME/.config/autostart/disable-keys.desktop"
 
 echo ""
-echo "[6/9] Disabling KDE shortcuts that could cause confusion..."
+echo "[5/9] Disabling KDE shortcuts that could cause confusion..."
 echo "------------------------------------------------------------"
 
 sudo -u $ACTUAL_USER bash << 'USEREOF'
@@ -227,7 +183,7 @@ kwriteconfig5 --file krunnerrc --group General --key "RetainPriorSearch" false
 USEREOF
 
 echo ""
-echo "[7/9] Keeping login screen, disabling auto-lock after login..."
+echo "[6/9] Keeping login screen, disabling auto-lock after login..."
 echo "--------------------------------------------------------------"
 
 # Login screen (SDDM) is kept so user logs in normally with password
@@ -241,7 +197,7 @@ kwriteconfig5 --file kscreenlockerrc --group Daemon --key Timeout 0
 USEREOF
 
 echo ""
-echo "[8/9] Configuring Timeshift automatic backups..."
+echo "[7/9] Configuring Timeshift automatic backups..."
 echo "-------------------------------------------------"
 
 # Only write Timeshift config if it doesn't already exist
@@ -282,7 +238,7 @@ fi
 systemctl enable cronie 2>/dev/null || systemctl enable cron 2>/dev/null || true
 
 echo ""
-echo "[9/9] Setting up end-of-life notification..."
+echo "[8/9] Setting up end-of-life notification..."
 echo "---------------------------------------------"
 
 # Create the EOL check script that runs at each login
@@ -357,13 +313,59 @@ X-GNOME-Autostart-enabled=true
 EOF
 chown $ACTUAL_USER:$ACTUAL_USER "$USER_HOME/.config/autostart/eol-notification.desktop"
 
+
 echo ""
-echo "[10/10] Final cleanup..."
-echo "------------------------"
+echo "[9/9] Configuring KDE desktop settings..."
+echo "--------------------------------------------"
 
-# Remove Konqueror (old browser that might confuse users)
-apt remove -y --purge konqueror 2>/dev/null || true
+sudo -u $ACTUAL_USER bash << 'USEREOF'
 
+# Double-click to open files (like Windows)
+kwriteconfig5 --file kdeglobals --group KDE --key SingleClick false
+
+# Show file extensions in Dolphin file manager
+# HideFileExtensions false means extensions are always visible
+kwriteconfig5 --file kdeglobals --group KDE --key HideFileExtensions false
+
+# Single workspace - prevents windows disappearing to another workspace
+kwriteconfig5 --file kwinrc --group Desktops --key Number 1
+kwriteconfig5 --file kwinrc --group Desktops --key Rows 1
+
+# Disable desktop effects that might confuse
+kwriteconfig5 --file kwinrc --group Plugins --key desktopgridEnabled false
+kwriteconfig5 --file kwinrc --group Plugins --key presentwindowsEnabled false
+kwriteconfig5 --file kwinrc --group Plugins --key cube-slideEnabled false
+
+# Window controls on the right like Windows (minimize, maximize, close)
+kwriteconfig5 --file kwinrc --group org.kde.kdecoration2 --key ButtonsOnRight "IAX"
+kwriteconfig5 --file kwinrc --group org.kde.kdecoration2 --key ButtonsOnLeft ""
+
+# TODO: Apply Windows-like theme and look and feel
+# plasma-apply-lookandfeel and plasma-apply-colorscheme need to be
+# verified against the actual running system before adding here
+
+# TODO: Disable hot corners (screen edges)
+# Set manually via System Settings → Workspace → Screen Edges
+# then run: cat ~/.config/kwinrc | grep -A10 ElectricBorders
+# and add the correct kwriteconfig5 commands here
+
+# TODO: Set Plastik window decoration
+# Set manually via System Settings → Appearance → Window Decorations
+# then run: cat ~/.config/kwinrc | grep -A5 kdecoration2
+# and add the correct kwriteconfig5 commands here
+
+# TODO: Simplify notification area
+# Remove unused system tray icons to keep it clean and Windows-like
+
+# TODO: Simplify taskbar
+# Remove unused taskbar widgets, keep only: app launcher, task manager,
+# system tray, clock - similar to Windows taskbar layout
+
+# TODO: Set desktop background image
+# Use a clean, simple wallpaper similar to Windows defaults
+# plasma-apply-wallpaperimage /path/to/image.jpg
+
+USEREOF
 echo ""
 echo "============================================="
 echo " Setup complete!"
