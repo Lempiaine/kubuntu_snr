@@ -35,7 +35,7 @@ install_if_missing() {
 }
 
 echo ""
-echo "[1/9] Installing required packages..."
+echo "[1/8] Installing required packages..."
 echo "--------------------------------------"
 apt update -q
 
@@ -50,7 +50,7 @@ install_if_missing \
   firefox
 
 echo ""
-echo "[2/9] Configuring silent automatic updates..."
+echo "[2/8] Configuring silent automatic updates..."
 echo "----------------------------------------------"
 
 # Configure unattended-upgrades
@@ -101,7 +101,7 @@ systemctl start unattended-upgrades
 
 
 echo ""
-echo "[3/9] Disabling update popups..."
+echo "[3/8] Disabling update popups..."
 echo "---------------------------------"
 
 # Mask update-notifier and plasma-discover-notifier autostart entries
@@ -114,7 +114,7 @@ ln -sf /dev/null /etc/xdg/autostart/plasma-discover-notifier.desktop
 
 
 echo ""
-echo "[4/9] Disabling confusing keyboard keys..."
+echo "[4/8] Disabling confusing keyboard keys..."
 echo "-------------------------------------------"
 
 # Disable Caps Lock system-wide via keyboard config
@@ -147,42 +147,35 @@ USEREOF
 # KDE automatically applies ~/.Xmodmap at login - no autostart entry needed
 
 
-echo ""
-echo "[5/9] Disabling KDE shortcuts that could cause confusion..."
-echo "------------------------------------------------------------"
-
-sudo -u $ACTUAL_USER bash << 'USEREOF'
-# Disable workspace switching shortcuts
-kwriteconfig5 --file kglobalshortcutsrc --group kwin --key "Switch to Desktop 1" "none,none,Switch to Desktop 1"
-kwriteconfig5 --file kglobalshortcutsrc --group kwin --key "Switch to Desktop 2" "none,none,Switch to Desktop 2"
-kwriteconfig5 --file kglobalshortcutsrc --group kwin --key "Window to Desktop 1" "none,none,Window to Desktop 1"
-
-# Disable activity switching
-kwriteconfig5 --file kglobalshortcutsrc --group "KDE Daemon" --key "Show System Activity" "none,none,Show System Activity"
-
-# Disable kRunner (search popup that appears on Alt+Space or Alt+F2)
-kwriteconfig5 --file kglobalshortcutsrc --group "krunner.desktop" --key "_launch" "none,none,KRunner"
-kwriteconfig5 --file kglobalshortcutsrc --group "krunner.desktop" --key "RunClipboard" "none,none,Run command on clipboard contents"
-kwriteconfig5 --file krunnerrc --group General --key "ActionsEnabled" false
-kwriteconfig5 --file krunnerrc --group General --key "RetainPriorSearch" false
-USEREOF
 
 echo ""
-echo "[6/9] Keeping login screen, disabling auto-lock after login..."
-echo "--------------------------------------------------------------"
+echo "[5/8] Disabling auto-lock, screen blanking and sleep..."
+echo "--------------------------------------------------------"
 
 # Login screen (SDDM) is kept so user logs in normally with password
-# But once logged in the session never locks automatically
+# But once logged in: no auto-lock, no screen blanking, no sleep
 
 sudo -u $ACTUAL_USER bash << 'USEREOF'
+# Disable screen locker
 kwriteconfig5 --file kscreenlockerrc --group Daemon --key Autolock false
 kwriteconfig5 --file kscreenlockerrc --group Daemon --key LockOnResume false
 kwriteconfig5 --file kscreenlockerrc --group Daemon --key LockOnLidClose false
 kwriteconfig5 --file kscreenlockerrc --group Daemon --key Timeout 0
+
+# Disable display power management (screen blanking and turning off)
+# DPMSEnabled false = no screen off; StandbyDefault/SuspendDefault/OffDefault = 0 = never
+kwriteconfig5 --file powermanagementprofilesrc --group AC --group DPMSControl --key idleTime 0
+kwriteconfig5 --file powermanagementprofilesrc --group AC --group DPMSControl --key lockBeforeTurnOff false
+kwriteconfig5 --file powermanagementprofilesrc --group AC --group HandleButtonEvents --key lidAction 0
+kwriteconfig5 --file powermanagementprofilesrc --group AC --group HandleButtonEvents --key powerButtonAction 0
+kwriteconfig5 --file powermanagementprofilesrc --group AC --group SuspendSession --key idleTime 0
+kwriteconfig5 --file powermanagementprofilesrc --group AC --group SuspendSession --key suspendThenHibernate false
+kwriteconfig5 --file powermanagementprofilesrc --group AC --group SuspendSession --key suspendType 0
 USEREOF
 
+
 echo ""
-echo "[7/9] Configuring Timeshift automatic backups..."
+echo "[6/8] Configuring Timeshift automatic backups..."
 echo "-------------------------------------------------"
 
 # Only write Timeshift config if it doesn't already exist
@@ -223,7 +216,7 @@ fi
 systemctl enable cronie 2>/dev/null || systemctl enable cron 2>/dev/null || true
 
 echo ""
-echo "[8/9] Setting up end-of-life notification..."
+echo "[7/8] Setting up end-of-life notification..."
 echo "---------------------------------------------"
 
 # Create the EOL check script that runs at each login
@@ -299,7 +292,7 @@ EOF
 chown $ACTUAL_USER:$ACTUAL_USER "$USER_HOME/.config/autostart/eol-notification.desktop"
 
 echo ""
-echo "[9/9] Configuring KDE desktop settings..."
+echo "[8/8] Configuring KDE desktop settings..."
 echo "--------------------------------------------"
 
 sudo -u $ACTUAL_USER bash << 'USEREOF'
