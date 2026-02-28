@@ -158,6 +158,10 @@ kwriteconfig5 --file kwinrc --group ElectricBorders --key Top "None"
 kwriteconfig5 --file kwinrc --group ElectricBorders --key Right "None"
 kwriteconfig5 --file kwinrc --group ElectricBorders --key Bottom "None"
 
+# Window decoration - Plastik style (installed by default on Kubuntu)
+kwriteconfig5 --file kwinrc --group org.kde.kdecoration2 --key library "org.kde.kwin.style.plastik"
+kwriteconfig5 --file kwinrc --group org.kde.kdecoration2 --key theme "Plastik"
+
 # Window controls on the right like Windows (minimize, maximize, close)
 kwriteconfig5 --file kwinrc --group org.kde.kdecoration2 --key ButtonsOnRight "IAX"
 kwriteconfig5 --file kwinrc --group org.kde.kdecoration2 --key ButtonsOnLeft ""
