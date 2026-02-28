@@ -58,6 +58,8 @@ echo "----------------------------------------------"
 UU_CONF="/etc/apt/apt.conf.d/50unattended-upgrades"
 
 # Helper to uncomment or append a setting
+# Matches key followed by a space to avoid partial matches
+# e.g. Automatic-Reboot must not match Automatic-Reboot-WithUsers
 set_uu() {
   local key="$1"
   local value="$2"
@@ -116,11 +118,13 @@ echo "---------------------------------------------------------"
 
 sudo -u $ACTUAL_USER bash << 'USEREOF'
 
-# Set Windows-like theme (Breeze Light is already close to Windows)
-kwriteconfig5 --file kdeglobals --group General --key ColorScheme "BreezeLight"
-kwriteconfig5 --file kdeglobals --group KDE --key LookAndFeelPackage "org.kde.breeze.desktop"
+# Apply Windows-like look and feel properly using plasma tools
+# kwriteconfig5 alone is not enough for theme - need plasma-apply commands
+plasma-apply-lookandfeel --apply org.kde.breeze.desktop 2>/dev/null || true
+plasma-apply-colorscheme BreezeLight 2>/dev/null || true
 
 # Font similar to Segoe UI (Noto Sans is very close)
+# kwriteconfig5 is the correct way to set fonts
 kwriteconfig5 --file kdeglobals --group General --key font "Noto Sans,10,-1,5,50,0,0,0,0,0"
 kwriteconfig5 --file kdeglobals --group General --key fixed "Noto Sans Mono,10,-1,5,50,0,0,0,0,0"
 kwriteconfig5 --file kdeglobals --group General --key menuFont "Noto Sans,10,-1,5,50,0,0,0,0,0"
@@ -131,8 +135,9 @@ kwriteconfig5 --file kdeglobals --group WM --key activeFont "Noto Sans,10,-1,5,7
 # Double-click to open files (like Windows)
 kwriteconfig5 --file kdeglobals --group KDE --key SingleClick false
 
-# Show file extensions in file manager
-kwriteconfig5 --file dolphinrc --group General --key ShowFullPath true
+# Show file extensions in Dolphin file manager
+# HideFileExtensions false means extensions are always visible
+kwriteconfig5 --file kdeglobals --group KDE --key HideFileExtensions false
 
 # Single workspace - prevents windows disappearing to another workspace
 kwriteconfig5 --file kwinrc --group Desktops --key Number 1
@@ -143,6 +148,16 @@ kwriteconfig5 --file kwinrc --group Plugins --key desktopgridEnabled false
 kwriteconfig5 --file kwinrc --group Plugins --key presentwindowsEnabled false
 kwriteconfig5 --file kwinrc --group Plugins --key cube-slideEnabled false
 
+# Disable all hot corners (moving mouse to corners triggers unexpected actions)
+kwriteconfig5 --file kwinrc --group ElectricBorders --key TopLeft "None"
+kwriteconfig5 --file kwinrc --group ElectricBorders --key TopRight "None"
+kwriteconfig5 --file kwinrc --group ElectricBorders --key BottomLeft "None"
+kwriteconfig5 --file kwinrc --group ElectricBorders --key BottomRight "None"
+kwriteconfig5 --file kwinrc --group ElectricBorders --key Left "None"
+kwriteconfig5 --file kwinrc --group ElectricBorders --key Top "None"
+kwriteconfig5 --file kwinrc --group ElectricBorders --key Right "None"
+kwriteconfig5 --file kwinrc --group ElectricBorders --key Bottom "None"
+
 # Window controls on the right like Windows (minimize, maximize, close)
 kwriteconfig5 --file kwinrc --group org.kde.kdecoration2 --key ButtonsOnRight "IAX"
 kwriteconfig5 --file kwinrc --group org.kde.kdecoration2 --key ButtonsOnLeft ""
@@ -151,8 +166,8 @@ kwriteconfig5 --file kwinrc --group org.kde.kdecoration2 --key ButtonsOnLeft ""
 kwriteconfig5 --file kwalletrc --group Wallet --key "Enabled" false
 kwriteconfig5 --file kwalletrc --group Wallet --key "First Use" false
 
-# Disable activity manager (not needed, can confuse)
-kwriteconfig5 --file kactivitymanagerdrc --group activities --key enabled false 2>/dev/null || true
+# Disable activity manager - correct setting for recent KDE versions
+kwriteconfig5 --file kactivitymanagerdrc --group "Plugin-org.kde.kactivitymanagerd.activities" --key enabled false 2>/dev/null || true
 
 USEREOF
 
