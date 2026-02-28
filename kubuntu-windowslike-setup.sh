@@ -61,10 +61,10 @@ UU_CONF="/etc/apt/apt.conf.d/50unattended-upgrades"
 set_uu() {
   local key="$1"
   local value="$2"
-  if grep -q "^//.*${key}" "$UU_CONF"; then
-    sed -i "s|^//.*${key}.*|${key} \"${value}\";|" "$UU_CONF"
-  elif grep -q "^${key}" "$UU_CONF"; then
-    sed -i "s|^${key}.*|${key} \"${value}\";|" "$UU_CONF"
+  if grep -q "^\/\/.*${key} " "$UU_CONF"; then
+    sed -i "s|^//.*${key} .*|${key} \"${value}\";|" "$UU_CONF"
+  elif grep -q "^${key} " "$UU_CONF"; then
+    sed -i "s|^${key} .*|${key} \"${value}\";|" "$UU_CONF"
   else
     echo "${key} \"${value}\";" >> "$UU_CONF"
   fi
