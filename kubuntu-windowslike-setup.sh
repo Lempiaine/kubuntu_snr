@@ -148,27 +148,9 @@ kwriteconfig5 --file kwinrc --group Plugins --key desktopgridEnabled false
 kwriteconfig5 --file kwinrc --group Plugins --key presentwindowsEnabled false
 kwriteconfig5 --file kwinrc --group Plugins --key cube-slideEnabled false
 
-# Disable all hot corners (moving mouse to corners triggers unexpected actions)
-kwriteconfig5 --file kwinrc --group ElectricBorders --key TopLeft "None"
-kwriteconfig5 --file kwinrc --group ElectricBorders --key TopRight "None"
-kwriteconfig5 --file kwinrc --group ElectricBorders --key BottomLeft "None"
-kwriteconfig5 --file kwinrc --group ElectricBorders --key BottomRight "None"
-kwriteconfig5 --file kwinrc --group ElectricBorders --key Left "None"
-kwriteconfig5 --file kwinrc --group ElectricBorders --key Top "None"
-kwriteconfig5 --file kwinrc --group ElectricBorders --key Right "None"
-kwriteconfig5 --file kwinrc --group ElectricBorders --key Bottom "None"
-
-# Window decoration - Plastik style (installed by default on Kubuntu)
-kwriteconfig5 --file kwinrc --group org.kde.kdecoration2 --key library "org.kde.kwin.style.plastik"
-kwriteconfig5 --file kwinrc --group org.kde.kdecoration2 --key theme "Plastik"
-
 # Window controls on the right like Windows (minimize, maximize, close)
 kwriteconfig5 --file kwinrc --group org.kde.kdecoration2 --key ButtonsOnRight "IAX"
 kwriteconfig5 --file kwinrc --group org.kde.kdecoration2 --key ButtonsOnLeft ""
-
-# Disable KDE wallet popups (confusing for non-technical users)
-kwriteconfig5 --file kwalletrc --group Wallet --key "Enabled" false
-kwriteconfig5 --file kwalletrc --group Wallet --key "First Use" false
 
 # Disable activity manager - correct setting for recent KDE versions
 kwriteconfig5 --file kactivitymanagerdrc --group "Plugin-org.kde.kactivitymanagerd.activities" --key enabled false 2>/dev/null || true
@@ -411,11 +393,24 @@ echo "  - EOL notification configured (weekly 3-6 months before, daily under 3 m
 echo ""
 echo " NEXT STEPS (manual - a few minutes work):"
 echo "  1. Reboot the system: sudo reboot"
-echo "  2. Right-click the taskbar to pin frequently"
+echo ""
+echo "  2. Set Plastik window decoration:"
+echo "     System Settings → Appearance → Window Decorations"
+echo "     Select Plastik → Apply"
+echo "     Then run: cat ~/.config/kwinrc | grep -A5 kdecoration2"
+echo "     and send the output to update this script with correct values"
+echo ""
+echo "  3. Disable hot corners:"
+echo "     System Settings → Workspace → Screen Edges"
+echo "     Set all corners and edges to No Action → Apply"
+echo "     Then run: cat ~/.config/kwinrc | grep -A10 ElectricBorders"
+echo "     and send the output to update this script with correct values"
+echo ""
+echo "  4. Right-click the taskbar to pin frequently"
 echo "     used apps (browser, file manager etc)"
-echo "  3. Set a clean desktop wallpaper"
-echo "  4. Configure browser homepage and bookmarks"
-echo "  5. Run Timeshift once manually to create"
+echo "  5. Set a clean desktop wallpaper"
+echo "  6. Configure browser homepage and bookmarks"
+echo "  7. Run Timeshift once manually to create"
 echo "     the first backup snapshot:"
 echo "     sudo timeshift --create --comments 'Fresh install'"
 echo ""
