@@ -110,14 +110,6 @@ ln -sf /dev/null /etc/xdg/autostart/update-notifier.desktop
 ln -sf /dev/null /etc/xdg/autostart/plasma-discover-notifier.desktop
 
 
-# Disable release upgrade prompts (admin handles this manually)
-if [ -f /etc/update-manager/release-upgrades ]; then
-  sed -i 's/Prompt=.*/Prompt=never/' /etc/update-manager/release-upgrades
-else
-  mkdir -p /etc/update-manager
-  echo -e "[DEFAULT]\nPrompt=never" > /etc/update-manager/release-upgrades
-fi
-
 echo ""
 echo "[4/9] Configuring KDE desktop to look like Windows 10..."
 echo "---------------------------------------------------------"
