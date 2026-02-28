@@ -102,31 +102,13 @@ echo ""
 echo "[3/9] Disabling update popups..."
 echo "---------------------------------"
 
-# Disable update-notifier autostart so it never shows popups
-# We keep the package installed so updates don't reinstall it as a dependency
-if [ -f /etc/xdg/autostart/update-notifier.desktop ]; then
-  sed -i 's/^X-GNOME-Autostart-enabled=.*/X-GNOME-Autostart-enabled=false/'     /etc/xdg/autostart/update-notifier.desktop
-  # Also hide it from KDE autostart
-  if ! grep -q "^Hidden=true" /etc/xdg/autostart/update-notifier.desktop; then
-    echo "Hidden=true" >> /etc/xdg/autostart/update-notifier.desktop
-  fi
-fi
+# Mask update-notifier and plasma-discover-notifier autostart entries
+# Symlinking to /dev/null means the file is always empty regardless
+# of what package updates do to the original files
+mkdir -p /etc/xdg/autostart
+ln -sf /dev/null /etc/xdg/autostart/update-notifier.desktop
+ln -sf /dev/null /etc/xdg/autostart/plasma-discover-notifier.desktop
 
-# Disable KDE's own update notifier popup
-sudo -u $ACTUAL_USER bash << 'USEREOF'
-kwriteconfig5 --file plasma-discover-notifierrc --group Global --key UseUnattendedUpdates true 2>/dev/null || true
-USEREOF
-
-# Stop Discover (KDE software center) from showing update notifications
-mkdir -p /etc/xdg
-DISCOVERRC="/etc/xdg/discoverrc"
-if grep -q "^UseUnattendedUpdates" "$DISCOVERRC" 2>/dev/null; then
-  sed -i 's|^UseUnattendedUpdates.*|UseUnattendedUpdates=true|' "$DISCOVERRC"
-elif grep -q "^\[Software\]" "$DISCOVERRC" 2>/dev/null; then
-  sed -i '/^\[Software\]/a UseUnattendedUpdates=true' "$DISCOVERRC"
-else
-  printf '[Software]\nUseUnattendedUpdates=true\n' >> "$DISCOVERRC"
-fi
 
 # Disable release upgrade prompts (admin handles this manually)
 if [ -f /etc/update-manager/release-upgrades ]; then
