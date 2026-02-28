@@ -58,8 +58,6 @@ echo "----------------------------------------------"
 UU_CONF="/etc/apt/apt.conf.d/50unattended-upgrades"
 
 # Helper to uncomment or append a setting
-# Matches key followed by a space to avoid partial matches
-# e.g. Automatic-Reboot must not match Automatic-Reboot-WithUsers
 set_uu() {
   local key="$1"
   local value="$2"
@@ -98,25 +96,6 @@ set_apt 'APT::Periodic::Unattended-Upgrade' '1'
 # Enable the unattended-upgrades service
 systemctl enable unattended-upgrades
 systemctl start unattended-upgrades
-
-# Make systemd timers persistent so missed updates run on next boot
-# This is important for machines that are not always on
-mkdir -p /etc/systemd/system/apt-daily.timer.d
-cat > /etc/systemd/system/apt-daily.timer.d/override.conf << 'EOF'
-[Timer]
-Persistent=true
-EOF
-
-mkdir -p /etc/systemd/system/apt-daily-upgrade.timer.d
-cat > /etc/systemd/system/apt-daily-upgrade.timer.d/override.conf << 'EOF'
-[Timer]
-Persistent=true
-OnCalendar=*-*-* 03:00:00
-EOF
-
-systemctl daemon-reload
-systemctl enable apt-daily.timer
-systemctl enable apt-daily-upgrade.timer
 
 echo ""
 echo "[3/9] Removing update popups..."
