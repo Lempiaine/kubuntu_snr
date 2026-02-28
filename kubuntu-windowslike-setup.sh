@@ -117,50 +117,29 @@ echo ""
 echo "[4/9] Disabling confusing keyboard keys..."
 echo "-------------------------------------------"
 
-# Disable caps lock system-wide - only change XKBOPTIONS, preserve existing layout
+# Create a custom XKB symbols file to disable confusing keys
+# This works on both X11 and Wayland, unlike xmodmap which is X11-only
+cat > /usr/share/X11/xkb/symbols/custom_disable << 'EOF'
+partial modifier_keys
+xkb_symbols "disable_keys" {
+    key <INS>  { [ NoSymbol ] };
+    key <SCLK> { [ NoSymbol ] };
+    key <PAUS> { [ NoSymbol ] };
+};
+EOF
+
+# Apply caps:none and the custom disable rules via XKBOPTIONS
+# Only modify XKBOPTIONS, preserve existing layout/model/variant settings
 KB_CONF="/etc/default/keyboard"
+XKBOPTS="caps:none,custom_disable:disable_keys"
 if grep -q "^XKBOPTIONS" "$KB_CONF" 2>/dev/null; then
-  # Already has XKBOPTIONS - add caps:none if not already there
-  if ! grep -q "caps:none" "$KB_CONF"; then
-    sed -i 's|^XKBOPTIONS="\(.*\)"|XKBOPTIONS="\1,caps:none"|' "$KB_CONF"
-    sed -i 's|^XKBOPTIONS="",caps:none|XKBOPTIONS="caps:none"|' "$KB_CONF"
-  fi
+  sed -i "s|^XKBOPTIONS=.*|XKBOPTIONS=\"${XKBOPTS}\"|" "$KB_CONF"
 else
-  # No XKBOPTIONS line - append it
-  echo 'XKBOPTIONS="caps:none"' >> "$KB_CONF"
+  echo "XKBOPTIONS=\"${XKBOPTS}\"" >> "$KB_CONF"
 fi
+
+# Apply immediately without reboot
 dpkg-reconfigure -f noninteractive keyboard-configuration 2>/dev/null || true
-
-# Create xmodmap to disable additional confusing keys
-cat > "$USER_HOME/.Xmodmap" << 'EOF'
-! Disable Caps Lock
-clear lock
-keycode 66 = NoSymbol
-
-! Disable Insert key (prevents accidental overtype mode in text editors)
-keycode 118 = NoSymbol
-
-! Disable Scroll Lock (does nothing useful for regular users)
-keycode 78 = NoSymbol
-
-! Disable Pause/Break key (does nothing useful for regular users)
-keycode 127 = NoSymbol
-EOF
-
-chown $ACTUAL_USER:$ACTUAL_USER "$USER_HOME/.Xmodmap"
-
-# Add xmodmap to KDE autostart
-mkdir -p "$USER_HOME/.config/autostart"
-cat > "$USER_HOME/.config/autostart/disable-keys.desktop" << EOF
-[Desktop Entry]
-Type=Application
-Name=Disable Distracting Keys
-Exec=xmodmap $USER_HOME/.Xmodmap
-Hidden=false
-NoDisplay=false
-X-GNOME-Autostart-enabled=true
-EOF
-chown $ACTUAL_USER:$ACTUAL_USER "$USER_HOME/.config/autostart/disable-keys.desktop"
 
 echo ""
 echo "[5/9] Disabling KDE shortcuts that could cause confusion..."
@@ -312,7 +291,6 @@ NoDisplay=true
 X-GNOME-Autostart-enabled=true
 EOF
 chown $ACTUAL_USER:$ACTUAL_USER "$USER_HOME/.config/autostart/eol-notification.desktop"
-
 
 echo ""
 echo "[9/9] Configuring KDE desktop settings..."
