@@ -58,11 +58,13 @@ echo "----------------------------------------------"
 UU_CONF="/etc/apt/apt.conf.d/50unattended-upgrades"
 
 # Helper to uncomment or append a setting
+# Matches key followed by a space to avoid partial matches
+# e.g. Automatic-Reboot must not match Automatic-Reboot-WithUsers
 set_uu() {
   local key="$1"
   local value="$2"
-  if grep -q "^\/\/.*${key} " "$UU_CONF"; then
-    sed -i "s|^//.*${key} .*|${key} \"${value}\";|" "$UU_CONF"
+  if grep -q "^\/\/${key} " "$UU_CONF"; then
+    sed -i "s|^//${key} .*|${key} \"${value}\";|" "$UU_CONF"
   elif grep -q "^${key} " "$UU_CONF"; then
     sed -i "s|^${key} .*|${key} \"${value}\";|" "$UU_CONF"
   else
