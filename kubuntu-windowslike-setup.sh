@@ -110,7 +110,7 @@ echo "---------------------------------"
 mkdir -p /etc/xdg/autostart
 ln -sf /dev/null /etc/xdg/autostart/update-notifier.desktop
 ln -sf /dev/null /etc/xdg/autostart/plasma-discover-notifier.desktop
-
+ln -sf /dev/null /etc/xdg/autostart/org.kde.discover.notifier.desktop
 
 
 echo ""
