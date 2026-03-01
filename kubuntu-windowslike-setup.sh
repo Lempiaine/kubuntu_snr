@@ -274,3 +274,15 @@ echo ""
 echo " To manually trigger updates anytime:"
 echo "  sudo unattended-upgrade -v"
 echo ""
+echo ""
+echo "TODO:"
+echo "- Remove extra apps from task bar"
+echo "- Remove extra icons from the bottom right panel"
+echo "- Change desktop background"
+echo "- Firefox to taskbar and desktop"
+echo "- Firefox favourites"
+
+
+
+
+
