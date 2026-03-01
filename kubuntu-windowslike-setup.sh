@@ -35,7 +35,7 @@ install_if_missing() {
 }
 
 echo ""
-echo "[1/8] Installing required packages..."
+echo "[1/6] Installing required packages..."
 echo "--------------------------------------"
 apt update -q
 
@@ -50,7 +50,7 @@ install_if_missing \
   firefox
 
 echo ""
-echo "[2/8] Configuring silent automatic updates..."
+echo "[2/6] Configuring silent automatic updates..."
 echo "----------------------------------------------"
 
 # Configure unattended-upgrades
@@ -101,7 +101,7 @@ systemctl start unattended-upgrades
 
 
 echo ""
-echo "[3/8] Disabling update popups..."
+echo "[3/6] Disabling update popups..."
 echo "---------------------------------"
 
 # Mask update-notifier and plasma-discover-notifier autostart entries
@@ -113,8 +113,9 @@ ln -sf /dev/null /etc/xdg/autostart/plasma-discover-notifier.desktop
 ln -sf /dev/null /etc/xdg/autostart/org.kde.discover.notifier.desktop
 
 
+
 echo ""
-echo "[4/8] Disabling confusing keyboard keys..."
+echo "[4/6] Disabling confusing keyboard keys..."
 echo "-------------------------------------------"
 
 # Disable Caps Lock system-wide via keyboard config
@@ -149,7 +150,7 @@ USEREOF
 
 
 echo ""
-echo "[5/8] Disabling auto-lock, screen blanking and sleep..."
+echo "[5/6] Disabling auto-lock, screen blanking and sleep..."
 echo "--------------------------------------------------------"
 
 # Login screen (SDDM) is kept so user logs in normally with password
@@ -166,57 +167,15 @@ kwriteconfig5 --file kscreenlockerrc --group Daemon --key Timeout 0
 # DPMSEnabled false = no screen off; StandbyDefault/SuspendDefault/OffDefault = 0 = never
 kwriteconfig5 --file powermanagementprofilesrc --group AC --group DPMSControl --key idleTime 0
 kwriteconfig5 --file powermanagementprofilesrc --group AC --group DPMSControl --key lockBeforeTurnOff false
-kwriteconfig5 --file powermanagementprofilesrc --group AC --group HandleButtonEvents --key lidAction 0
-kwriteconfig5 --file powermanagementprofilesrc --group AC --group HandleButtonEvents --key powerButtonAction 0
 kwriteconfig5 --file powermanagementprofilesrc --group AC --group SuspendSession --key idleTime 0
 kwriteconfig5 --file powermanagementprofilesrc --group AC --group SuspendSession --key suspendThenHibernate false
 kwriteconfig5 --file powermanagementprofilesrc --group AC --group SuspendSession --key suspendType 0
 USEREOF
 
 
-echo ""
-echo "[6/8] Configuring Timeshift automatic backups..."
-echo "-------------------------------------------------"
-
-# Only write Timeshift config if it doesn't already exist
-if [ ! -f /etc/timeshift/timeshift.json ]; then
-  mkdir -p /etc/timeshift
-  cat > /etc/timeshift/timeshift.json << 'EOF'
-{
-  "backup_device_uuid" : "",
-  "parent_device_uuid" : "",
-  "do_first_run" : "false",
-  "btrfs_mode" : "false",
-  "include_btrfs_home_for_backup" : "false",
-  "include_btrfs_home_for_restore" : "false",
-  "stop_cron_emails" : "true",
-  "btrfs_use_qgroup" : "true",
-  "schedule_monthly" : "false",
-  "schedule_weekly" : "true",
-  "schedule_daily" : "true",
-  "schedule_hourly" : "false",
-  "schedule_boot" : "false",
-  "count_monthly" : "2",
-  "count_weekly" : "3",
-  "count_daily" : "5",
-  "count_hourly" : "6",
-  "count_boot" : "5",
-  "snapshot_size" : "",
-  "snapshot_count" : "",
-  "date_format" : "%Y-%m-%d %H:%M:%S",
-  "exclude" : [],
-  "exclude-apps" : []
-}
-EOF
-  echo "  Timeshift config created."
-else
-  echo "  Timeshift config already exists, skipping."
-fi
-
-systemctl enable cronie 2>/dev/null || systemctl enable cron 2>/dev/null || true
 
 echo ""
-echo "[7/8] Setting up end-of-life notification..."
+echo "[6/6] Setting up end-of-life notification..."
 echo "---------------------------------------------"
 
 # Create the EOL check script that runs at each login
@@ -279,8 +238,9 @@ EOLEOF
 chmod +x /usr/local/bin/check-eol-notification.sh
 
 # Add to KDE autostart so it runs at each login
-mkdir -p "$USER_HOME/.config/autostart"
-cat > "$USER_HOME/.config/autostart/eol-notification.desktop" << 'EOF'
+sudo -u $ACTUAL_USER bash << 'USEREOF'
+mkdir -p "$HOME/.config/autostart"
+cat > "$HOME/.config/autostart/eol-notification.desktop" << 'EOF'
 [Desktop Entry]
 Type=Application
 Name=EOL Notification Check
@@ -289,60 +249,8 @@ Hidden=false
 NoDisplay=true
 X-GNOME-Autostart-enabled=true
 EOF
-chown $ACTUAL_USER:$ACTUAL_USER "$USER_HOME/.config/autostart/eol-notification.desktop"
-
-echo ""
-echo "[8/8] Configuring KDE desktop settings..."
-echo "--------------------------------------------"
-
-sudo -u $ACTUAL_USER bash << 'USEREOF'
-
-# Double-click to open files (like Windows)
-kwriteconfig5 --file kdeglobals --group KDE --key SingleClick false
-
-# Show file extensions in Dolphin file manager
-# HideFileExtensions false means extensions are always visible
-kwriteconfig5 --file kdeglobals --group KDE --key HideFileExtensions false
-
-# Single workspace - prevents windows disappearing to another workspace
-kwriteconfig5 --file kwinrc --group Desktops --key Number 1
-kwriteconfig5 --file kwinrc --group Desktops --key Rows 1
-
-# Disable desktop effects that might confuse
-kwriteconfig5 --file kwinrc --group Plugins --key desktopgridEnabled false
-kwriteconfig5 --file kwinrc --group Plugins --key presentwindowsEnabled false
-kwriteconfig5 --file kwinrc --group Plugins --key cube-slideEnabled false
-
-# Window controls on the right like Windows (minimize, maximize, close)
-kwriteconfig5 --file kwinrc --group org.kde.kdecoration2 --key ButtonsOnRight "IAX"
-kwriteconfig5 --file kwinrc --group org.kde.kdecoration2 --key ButtonsOnLeft ""
-
-# TODO: Apply Windows-like theme and look and feel
-# plasma-apply-lookandfeel and plasma-apply-colorscheme need to be
-# verified against the actual running system before adding here
-
-# TODO: Disable hot corners (screen edges)
-# Set manually via System Settings → Workspace → Screen Edges
-# then run: cat ~/.config/kwinrc | grep -A10 ElectricBorders
-# and add the correct kwriteconfig5 commands here
-
-# TODO: Set Plastik window decoration
-# Set manually via System Settings → Appearance → Window Decorations
-# then run: cat ~/.config/kwinrc | grep -A5 kdecoration2
-# and add the correct kwriteconfig5 commands here
-
-# TODO: Simplify notification area
-# Remove unused system tray icons to keep it clean and Windows-like
-
-# TODO: Simplify taskbar
-# Remove unused taskbar widgets, keep only: app launcher, task manager,
-# system tray, clock - similar to Windows taskbar layout
-
-# TODO: Set desktop background image
-# Use a clean, simple wallpaper similar to Windows defaults
-# plasma-apply-wallpaperimage /path/to/image.jpg
-
 USEREOF
+
 echo ""
 echo "============================================="
 echo " Setup complete!"
@@ -352,50 +260,17 @@ echo " Summary of what was configured:"
 echo "  - Silent automatic updates at 3am daily"
 echo "  - Updates run on boot if machine was off at 3am"
 echo "  - All update and release upgrade popups removed"
-echo "  - KDE desktop configured to look like Windows 10"
-echo "  - Window controls on the right (like Windows)"
-echo "  - Noto Sans font (close to Windows Segoe UI)"
-echo "  - Double-click to open files (like Windows)"
-echo "  - File extensions shown in file manager"
-echo "  - Single workspace (no disappearing windows)"
 echo "  - Caps Lock permanently disabled"
 echo "  - Insert, Scroll Lock, Pause/Break disabled"
-echo "  - Confusing keyboard shortcuts disabled"
-echo "  - kRunner search popup disabled"
 echo "  - Login screen kept (user logs in with password)"
 echo "  - Auto-lock after login disabled (session never locks)"
-echo "  - Lock on sleep/resume disabled"
-echo "  - KDE Wallet popups disabled"
-echo "  - Timeshift automatic backups configured"
+echo "  - Screen blanking and sleep disabled"
 echo "  - Firefox installed"
 echo "  - EOL notification configured (weekly 3-6 months before, daily under 3 months)"
 echo ""
-echo " NEXT STEPS (manual - a few minutes work):"
+echo " NEXT STEPS:"
 echo "  1. Reboot the system: sudo reboot"
-echo ""
-echo "  2. Set Plastik window decoration:"
-echo "     System Settings → Appearance → Window Decorations"
-echo "     Select Plastik → Apply"
-echo "     Then run: cat ~/.config/kwinrc | grep -A5 kdecoration2"
-echo "     and send the output to update this script with correct values"
-echo ""
-echo "  3. Disable hot corners:"
-echo "     System Settings → Workspace → Screen Edges"
-echo "     Set all corners and edges to No Action → Apply"
-echo "     Then run: cat ~/.config/kwinrc | grep -A10 ElectricBorders"
-echo "     and send the output to update this script with correct values"
-echo ""
-echo "  4. Right-click the taskbar to pin frequently"
-echo "     used apps (browser, file manager etc)"
-echo "  5. Set a clean desktop wallpaper"
-echo "  6. Configure browser homepage and bookmarks"
-echo "  7. Run Timeshift once manually to create"
-echo "     the first backup snapshot:"
-echo "     sudo timeshift --create --comments 'Fresh install'"
 echo ""
 echo " To manually trigger updates anytime:"
 echo "  sudo unattended-upgrade -v"
-echo ""
-echo " To restore system if something goes wrong:"
-echo "  sudo timeshift --restore"
 echo ""
